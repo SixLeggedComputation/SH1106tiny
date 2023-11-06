@@ -38,7 +38,7 @@
 #define END 0xee
 #define DISPLAY_WIDTH 128
 #define DISPLAY_HEIGHT 64
-enum { 
+enum pos_t{ 
 	LEFT, 
 	CENTRE, 
 	RIGHT 
@@ -52,7 +52,7 @@ enum angle_t{
 	
 typedef unsigned char shchar_t;	
 
-// Replacemant character
+// Replacemant sign to be used for string signs, that are not encoded in font
 #define UNPRINTABLE 0x3F
 
 class SH1106mini {
@@ -86,6 +86,10 @@ private:
 	/* Picks corresponding bitmap from font definition, stores it into DisplayBuffer, 
 	 * then apply transformations, if any */
 	void MakeBitmap(const shchar_t c, angle_t angle);
+	
+	// Computes start of texting as a function of text length and alignment
+	// returns a pixel value
+	int start_column(uint8_t strlen, pos_t alignment);
 	
     /* Performs 90 degree counter-clockwise rotation.
 	 * Transfers rotated bitmap into DisplayBuffer, then trashes local variables */
@@ -130,10 +134,22 @@ private:
    void sendInitCommands(void);
 
    // Write a  8 x 8 bitmap direct to display
+   // x and y are start pixel
    void drawBitmap(int x, int y, uint8_t *bitmap);
+   
+   // prints char array
+   // what : array to be printed (no trailing 0)
+   // textlen: number of signs, array length. If larger than 16, only first 16 signs are printed.
+   // y : start pixel of vertical axis
+   // alignment: center, left or right
+   // angle: signs rotation (90, 180, 270 degrees)    
+   void printArrayAt(const shchar_t* what, uint8_t textlen, int y, pos_t alignment, angle_t angle);
    
    // Write a string to display using alignment and characters rotation (not to be confounded with screen rotation)
    // String s must contain no character code less than 0x20. These codes will be replaced with '?'
-   void printAt (int y, String s, int alignment, angle_t angle = R0);
+   // y : start pixel of vertical axis
+   // s must be no wider than 16 characters, otherwise nothing is printed
+   // alignment and angle defined as for printArrayAt
+   void printAt (int y, String s, pos_t alignment, angle_t angle = R0);
 
    };

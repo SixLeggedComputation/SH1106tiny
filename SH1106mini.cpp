@@ -1,4 +1,11 @@
-
+/*
+ *Changes 28/10/2023
+ * 
+ * created function printArrayAt 
+ * 
+ * in function printAt, unexpected alignment value yields undefined start_column. This behavior was changed, so that LEFT is now default. Any unexpected value will yield left alignment
+ * 
+ * */
 #include "SH1106mini.h"
 #include "SH1106fonts.h"
 
@@ -206,25 +213,41 @@ void SH1106mini::UpdateBufferWithRotated(){
     delete[] rotated;		
 }
 
-void SH1106mini::printAt (int y, String s, int alignment, angle_t angle){
-	int x;
+
+int SH1106mini::start_column(uint8_t textlen, pos_t alignment){
+    int x;
+    
+    if(alignment == CENTRE || alignment == RIGHT){
+		x = (128 - (textlen << 3));
+		
+		if(alignment == CENTRE){
+			x >>= 1;
+		}
+	}
+	else{
+		x = 0;
+	}
+	
+	return x;
+}
+
+void SH1106mini::printArrayAt(const shchar_t* what, uint8_t textlen, int y, pos_t alignment, angle_t angle){
+    uint8_t printable_len = textlen <= 16 ? textlen : 16;
+    int x = start_column(printable_len, alignment);
+    
+    for(uint8_t k = 0; k < printable_len; k++){
+		MakeBitmap(what[k], angle);
+		drawBitmap(x, y, DisplayBuffer);
+		x += 8;
+	}	
+}
+
+void SH1106mini::printAt (int y, String s, pos_t alignment, angle_t angle){
 	// string length must be less or equal to screen width
 	// otherwise abandon
 	if (s.length()<= 16) { 
-		switch (alignment) {
-			case LEFT:
-				x = 0;
-				break;
-			case CENTRE:
-				x = (128 - (s.length() << 3)) >> 1; // x = (128 - string width) / 2
-				break;
-			case RIGHT:
-				x = (128 - (s.length() << 3)); // x = (128 - string width)
-				break;
-			default:
-				break;
-		}
-
+		int x = start_column((uint8_t)s.length(), alignment);
+		
 		for (unsigned int k = 0; k < s.length(); k++) {
 			MakeBitmap(s.charAt(k), angle);
 			drawBitmap(x, y, DisplayBuffer);
